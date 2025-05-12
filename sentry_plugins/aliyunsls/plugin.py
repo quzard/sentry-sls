@@ -270,17 +270,13 @@ class AliyunSLSPlugin(CorePluginMixin, DataForwardingPlugin):
         Transforms the Sentry event into the format expected by AliyunSLSClient.
         SLS LogItem `contents` expects a list of (key, value) string tuples.
         """
-        print(f"get_event_payload: {self.project_access_key_id}, {self.project_sls_project_name}, {self.project_sls_logstore_name}")
-        properties = self.get_event_payload_properties(event)
+        logger.info(f"get_event_payload: {self.project_access_key_id}, {self.project_sls_project_name}, {self.project_sls_logstore_name}")
+        # properties = self.get_event_payload_properties(event)
         
         # Convert dictionary to list of (key, value) tuples
         # Ensure keys are valid for SLS (usually alphanumeric, underscores)
         sls_contents = []
-        for key, value in properties.items():
-            # Basic key sanitization: replace characters not ideal for keys
-            # SLS keys are fairly flexible but good practice to keep them clean.
-            clean_key = str(key).replace(".", "_").replace("-", "_").replace(":", "_")
-            sls_contents.append((clean_key, str(value))) # Ensure value is string
+        sls_contents.append(("time", event.datetime.strftime("%s")))
 
         return sls_contents
 
