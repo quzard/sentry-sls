@@ -17,7 +17,7 @@ class AliyunSLSClient:
         project: str,
         logstore: str,
         topic: Optional[str] = "",
-        source_ip: Optional[str] = None, # IP of the machine sending logs, usually Sentry server
+        source_ip: Optional[str] = None,
     ):
         self.endpoint = endpoint
         self.access_key_id = access_key_id
@@ -28,21 +28,12 @@ class AliyunSLSClient:
         self.source_ip = source_ip
 
         try:
-            # The 'region' parameter for LogClient is often derived from the endpoint,
-            # or sometimes not explicitly needed if the full endpoint includes the region.
-            # Example: if endpoint is 'cn-hangzhou.log.aliyuncs.com', region is 'cn-hangzhou'.
-            # The SDK might infer this. If not, you might need to parse it.
             self.client = LogClient(self.endpoint, self.access_key_id, self.access_key_secret)
         except Exception as e:
             logger.error(f"Failed to initialize AliyunSLSClient: {e}")
             raise ApiHostError(f"Failed to connect to SLS endpoint: {self.endpoint}")
 
     def send_log(self, contents: List[Tuple[str, str]]) -> None:
-        """
-        Sends a single log item to SLS.
-        :param contents: A list of (key, value) tuples representing the log content.
-                         All values MUST be strings.
-        """
         log_items = [LogItem(int(time.time()), contents=contents)]
 
         request = PutLogsRequest(
@@ -50,14 +41,13 @@ class AliyunSLSClient:
             logstore=self.logstore,
             topic=self.topic,
             logitems=log_items,
-            source=self.source_ip, # Optional: IP of the log source machine
+            source=self.source_ip,
         )
 
         try:
             response = self.client.put_logs(request)
-            response.log_print() # For debugging, prints request_id etc.
+            response.log_print()
         except LogException as e:
-            # LogException from aliyun-log-python-sdk can provide details
             logger.error(
                 "Aliyun SLS API Error: status=%s, error_code=%s, error_message=%s, request_id=%s",
                 e.http_status_code,
